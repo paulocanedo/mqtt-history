@@ -19,7 +19,6 @@ function save(obj) {
     if (err) throw err;
 
     console.log(new Date().toString(), 'save success');
-    console.log(serializer);
     modified = false;
   });
 }
