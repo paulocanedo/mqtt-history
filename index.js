@@ -1,3 +1,5 @@
+#!/usr/bin/nodejs
+
 const fs = require('fs');
 const mqtt = require('mqtt');
 const config = require('./config.js');
