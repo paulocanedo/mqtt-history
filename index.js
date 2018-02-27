@@ -1,7 +1,8 @@
 const fs = require('fs');
 const mqtt = require('mqtt');
+const config = require('./config.js');
 
-const client = mqtt.connect('ws://192.168.0.100:3000');
+const client = mqtt.connect(config.host);
 const serializer = {};
 const AUTOSAVE_INTERVAL = 1 * 1000;
 
@@ -14,7 +15,7 @@ function autoSave() {
 }
 
 function save(obj) {
-  let file = "history.json";
+  let file = config.outputfile;
   fs.writeFile(file, JSON.stringify(obj), (err) => {
     if (err) throw err;
 
@@ -36,8 +37,9 @@ client.on('connect', ack => {
   console.log(new Date().toString(), 'connected');
 });
 
-client.subscribe('casa/+/temperatura');
-client.subscribe('casa/+/humidade');
+for(let topic of config.topics) {
+  client.subscribe(topic);
+}
 
 client.on('message', function (topic, buffer) {
   let message = buffer.toString();
