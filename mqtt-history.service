@@ -1,0 +1,7 @@
+[Unit]
+Description = MQTT history to json file
+After = network.target
+[Service]
+ExecStart = /home/pi/apps/mqtt-history/index.js
+[Install]
+WantedBy = multi-user.target
