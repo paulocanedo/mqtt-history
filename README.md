@@ -1,5 +1,5 @@
 # mqtt-history
-A simple persistence service for MQTT protocol based on [mqtt.js](https://github.com/mqttjs)
+A simple persistence service for MQTT protocol based on [mqtt.js](https://github.com/mqttjs/MQTT.js)
 
 ## install as a systemctl service (ubuntu for example)
 
