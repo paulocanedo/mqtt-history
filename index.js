@@ -1,14 +1,15 @@
 #!/usr/bin/nodejs
 
-const fs = require('fs');
+const fs   = require('fs');
+const path = require('path');
+
 const mqtt = require('mqtt');
 const config = require('./config.js');
 
-const client = mqtt.connect(config.host);
-const serializer = {};
 const AUTOSAVE_INTERVAL = 1 * 1000;
 
-let modified = false;
+var serializer = {};
+var modified = false;
 
 function autoSave() {
   if(modified) {
@@ -17,7 +18,8 @@ function autoSave() {
 }
 
 function save(obj) {
-  let file = config.outputfile;
+  const file = getCurrentFile();
+
   fs.writeFile(file, JSON.stringify(obj), (err) => {
     if (err) throw err;
 
@@ -26,30 +28,65 @@ function save(obj) {
   });
 }
 
+function getCurrentFile() {
+  const filename = getFileName();
+  return path.format({
+    root: config.outputdir,
+    name: `/${filename}`,
+    ext: '.json'
+  });
+}
+
+function getFileName() {
+  const today = new Date();
+  let day = `${today.getDate()}`;
+  let month = `${today.getMonth() + 1}`;
+  let year = `${today.getFullYear()}`;
+
+  day = (day.length === 1) ? ('0' + day) : day;
+  month = (month.length === 1) ? ('0' + month) : month;
+
+  return `${year}${month}${day}`;
+}
+
 function pushToTopic(topic, timestamp, message) {
   let collection = serializer[topic];
   if(!collection) {
     collection = [];
   }
-  collection.push({'timestamp': timestamp, 'value': message});
+  collection.push({'timestamp': timestamp.getTime(), 'value': message});
   serializer[topic] = collection;
 }
 
-client.on('connect', ack => {
-  console.log(new Date().toString(), 'connected');
-});
+function init() {
+  console.log('connecting', config.host);
+  const client = mqtt.connect(config.host);
+  client.on('connect', ack => {
+    console.log(new Date().toString(), 'connected');
+  });
 
-for(let topic of config.topics) {
-  client.subscribe(topic);
+  for(let topic of config.topics) {
+    client.subscribe(topic);
+  }
+
+  client.on('message', function (topic, buffer) {
+    let message = buffer.toString();
+    let timestamp = new Date();
+
+    modified = true;
+    pushToTopic(topic, timestamp, message);
+    console.log(timestamp.toLocaleString(), 'message received');
+  });
+
+  setInterval(autoSave, AUTOSAVE_INTERVAL);
 }
 
-client.on('message', function (topic, buffer) {
-  let message = buffer.toString();
-  let timestamp = new Date();
+function readFileIfExists(file) {
+  if(fs.existsSync(file)) {
+    const data = fs.readFileSync(file);
+    serializer = JSON.parse(data);
+  }
+  init();
+}
 
-  modified = true;
-  pushToTopic(topic, timestamp, message);
-  console.log(timestamp.toString(), 'message received');
-});
-
-let saverTimerId = setInterval(autoSave, AUTOSAVE_INTERVAL);
+readFileIfExists(getCurrentFile());

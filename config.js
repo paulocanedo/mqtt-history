@@ -1,6 +1,6 @@
 module.exports = {
   host: 'ws://localhost:3000',
-  outputfile: './history.json',
+  outputdir: './www/',
   topics: [
     'home/+/temperature',
     'home/+/humidity'
