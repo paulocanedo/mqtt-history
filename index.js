@@ -17,7 +17,7 @@ function init() {
   }
 
   client.on('message', function (topic, buffer) {
-    console.log(timestamp.toLocaleString(), 'message received');
+    console.log(new Date().toLocaleString(), 'message received');
 
     let message = buffer.toString();
     serializer.add(topic, message);
